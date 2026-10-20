@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087a4b">
+  <meta name="description" content="Fresh groceries, pantry favorites and everyday essentials from Mega Mart.">
+  <title>Mega Mart · Groceries made easy</title>
+  <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/marketplace.css}">
+  <script defer th:src="@{/js/app.js}"></script>
+</head>
+<body class="marketplace">
+  <div class="top-strip"><span>✦ Fresh picks for your everyday table</span><a th:href="@{/shop#products}">Shop today’s favorites <span aria-hidden="true">→</span></a></div>
+  <header class="market-header">
+    <div class="market-header-inner">
+      <a class="brand" th:href="@{/shop}" aria-label="Mega Mart home">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 8h5l5 25a3 3 0 0 0 3 2h20a3 3 0 0 0 3-2l4-18H14"/><circle cx="21" cy="41" r="3"/><circle cx="37" cy="41" r="3"/><path d="M27 11c3-6 9-7 14-6-1 6-5 10-12 10"/></svg></span>
+        <span class="brand-copy"><b>Mega<span>Mart</span></b><small>Good things, close to home</small></span>
+      </a>
+      <div class="delivery-prompt"><span class="delivery-pin" aria-hidden="true">⌖</span><span><small>DELIVERING TO</small><b>Your neighborhood <span aria-hidden="true">⌄</span></b></span></div>
+      <nav class="main-nav" aria-label="Main navigation"><a class="nav-current" th:href="@{/shop}">Shop</a><a href="#customer-orders">My orders</a><a th:href="@{/seller/login}">Seller sign in</a></nav>
+      <a class="basket-button" href="#cart-panel" aria-label="Go to basket"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.3 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="19" r="1.4"/><circle cx="18" cy="19" r="1.4"/></svg><span>Basket</span><b id="basket-count" th:text="${cartCount}">0</b></a>
+      <button class="menu-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main class="market-main">
+    <div class="feedback-stack" role="status" aria-live="polite">
+      <p class="feedback-message success-message" th:if="${orderPlaced}" th:text="${orderPlaced}"></p>
+      <p class="feedback-message success-message" th:if="${shopMessage}" th:text="${shopMessage}"></p>
+      <p class="feedback-message error-message" th:if="${shopError}" th:text="${shopError}"></p>
+    </div>
+
+    <section class="hero-panel" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow hero-eyebrow"><span aria-hidden="true">✳</span> YOUR NEIGHBORHOOD GROCERY</p>
+        <h1 id="hero-title">Good food.<br><em>Good days.</em></h1>
+        <p class="hero-description">Fresh favorites, pantry staples and little treats for everything happening at home.</p>
+        <div class="hero-actions"><a class="button-primary" th:href="@{/shop#products}">Fill your basket <span aria-hidden="true">↗</span></a><a class="hero-text-link" href="#aisles">Explore the aisles <span aria-hidden="true">↓</span></a></div>
+        <div class="hero-points"><span><i aria-hidden="true">✓</i> Carefully packed</span><span><i aria-hidden="true">✓</i> Cash on delivery</span></div>
+      </div>
+      <div class="hero-visual" role="img" aria-label="Illustration of a basket filled with groceries">
+        <div class="hero-sun"></div>
+        <svg class="hero-basket-art" viewBox="0 0 700 520" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#hero-basket"></use></svg>
+        <div class="hero-sticker"><span>✿</span><b>Picked with care</b><small>Fresh finds for your table</small></div>
+        <svg class="flying-butterfly" viewBox="0 0 100 100" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#butterfly"></use></svg>
+      </div>
+    </section>
+
+    <section class="benefit-row" aria-label="Shopping benefits">
+      <div><span class="benefit-icon mint">✿</span><span><b>Fresh finds</b><small>Everyday favorites</small></span></div>
+      <div><span class="benefit-icon peach">▤</span><span><b>One easy basket</b><small>Groceries and home</small></span></div>
+      <div><span class="benefit-icon yellow">⌂</span><span><b>To your doorstep</b><small>Address at checkout</small></span></div>
+      <div><span class="benefit-icon lilac">₹</span><span><b>Pay on delivery</b><small>Cash when it arrives</small></span></div>
+    </section>
+
+    <section class="aisles-section" id="aisles" aria-labelledby="aisles-title">
+      <div class="section-heading"><div><p class="eyebrow">A LITTLE SOMETHING FOR EVERY MEAL</p><h2 id="aisles-title">Shop by aisle</h2><p>Find the good stuff, one category at a time.</p></div><a class="text-arrow" href="#products">See all products <span aria-hidden="true">↗</span></a></div>
+      <div class="aisle-grid">
+        <button class="aisle-card aisle-fruit" type="button" data-category-filter="fruit"><span class="aisle-copy"><b>Fruit</b><small>Sweet, sunny picks <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#fruit"></use></svg></button>
+        <button class="aisle-card aisle-veg" type="button" data-category-filter="vegetable"><span class="aisle-copy"><b>Vegetables</b><small>Fresh from the farm <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#vegetables"></use></svg></button>
+        <button class="aisle-card aisle-dairy" type="button" data-category-filter="dairy"><span class="aisle-copy"><b>Dairy</b><small>Cool and creamy <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#dairy"></use></svg></button>
+        <button class="aisle-card aisle-bakery" type="button" data-category-filter="bakery"><span class="aisle-copy"><b>Bakery</b><small>Little oven comforts <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#bakery"></use></svg></button>
+        <button class="aisle-card aisle-pantry" type="button" data-category-filter="pantry"><span class="aisle-copy"><b>Pantry</b><small>Everyday essentials <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#pantry"></use></svg></button>
+        <button class="aisle-card aisle-drinks" type="button" data-category-filter="drink"><span class="aisle-copy"><b>Drinks</b><small>A little refreshment <span>↗</span></small></span><svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#drinks"></use></svg></button>
+      </div>
+    </section>
+
+    <section class="products-section" id="products" aria-labelledby="products-title">
+      <div class="section-heading product-heading">
+        <div><p class="eyebrow">POPULAR IN YOUR NEIGHBORHOOD</p><h2 id="products-title">The everyday shop</h2><p>Lovely things for the fridge, pantry and table.</p></div>
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="product-search" type="search" placeholder="Search fruit, milk, snacks…" aria-label="Search products"><kbd>⌕</kbd></label>
+      </div>
+      <div class="filter-bar" aria-label="Filter products">
+        <button class="filter-chip is-selected" type="button" data-category-filter="all">All products</button>
+        <button class="filter-chip" type="button" data-category-filter="fruit">Fruit</button>
+        <button class="filter-chip" type="button" data-category-filter="vegetable">Vegetables</button>
+        <button class="filter-chip" type="button" data-category-filter="dairy">Dairy</button>
+        <button class="filter-chip" type="button" data-category-filter="bakery">Bakery</button>
+        <button class="filter-chip" type="button" data-category-filter="pantry">Pantry</button>
+      </div>
+
+      <div class="shop-layout">
+        <div class="catalog-column">
+          <div class="product-grid" id="product-grid" th:if="${!products.empty}">
+            <article class="product-card" th:each="product : ${products.content}" th:attr="data-search=|${product.name} ${product.category}|, data-category=${product.category}">
+              <div class="product-picture">
+                <img class="product-photo" th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" loading="lazy" onerror="this.hidden=true; this.parentElement.querySelector('.product-art').classList.remove('art-is-hidden')">
+                <div class="product-art" th:classappend="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl) ? ' art-is-hidden' : ''}" aria-hidden="true">
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'fruit')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#fruit"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'vegetable') or #strings.containsIgnoreCase(product.category, 'produce')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#vegetables"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'dairy') or #strings.containsIgnoreCase(product.category, 'milk') or #strings.containsIgnoreCase(product.category, 'cheese')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#dairy"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'bakery') or #strings.containsIgnoreCase(product.category, 'bread')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#bakery"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'drink') or #strings.containsIgnoreCase(product.category, 'beverage')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#drinks"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'snack')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#snacks"></use></svg>
+                  <svg th:if="${#strings.containsIgnoreCase(product.category, 'home') or #strings.containsIgnoreCase(product.category, 'house') or #strings.containsIgnoreCase(product.category, 'clean')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#home"></use></svg>
+                  <svg th:if="${!#strings.containsIgnoreCase(product.category, 'fruit') and !#strings.containsIgnoreCase(product.category, 'vegetable') and !#strings.containsIgnoreCase(product.category, 'produce') and !#strings.containsIgnoreCase(product.category, 'dairy') and !#strings.containsIgnoreCase(product.category, 'milk') and !#strings.containsIgnoreCase(product.category, 'cheese') and !#strings.containsIgnoreCase(product.category, 'bakery') and !#strings.containsIgnoreCase(product.category, 'bread') and !#strings.containsIgnoreCase(product.category, 'drink') and !#strings.containsIgnoreCase(product.category, 'beverage') and !#strings.containsIgnoreCase(product.category, 'snack') and !#strings.containsIgnoreCase(product.category, 'home') and !#strings.containsIgnoreCase(product.category, 'house') and !#strings.containsIgnoreCase(product.category, 'clean')}" viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#pantry"></use></svg>
+                </div>
+                <span class="stock-badge" th:classappend="${product.inStock ? ' stock-ready' : ' stock-sold'}" th:text="${product.inStock ? 'In stock' : 'Sold out'}">In stock</span>
+                <span class="picture-sparkle" aria-hidden="true">✦</span>
+              </div>
+              <div class="product-info">
+                <p class="product-category" th:text="${product.category}">Category</p><h3 th:text="${product.name}">Product name</h3>
+                <p class="product-weight" th:if="${product.weight != null and !#strings.isEmpty(product.weight)}" th:text="${product.weight}">Pack size</p>
+                <div class="product-bottom"><div><span class="product-price">₹<span th:text="${product.price}">0.00</span></span></div>
+                  <form class="add-product-form" th:action="@{/shop/cart/add}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><input type="hidden" name="productId" th:value="${product.id}"><input type="hidden" name="quantity" value="1"><button class="add-button" type="submit" th:disabled="${!product.inStock}" th:attr="aria-label=|Add ${product.name} to basket|"><span aria-hidden="true">+</span><span>Add</span></button></form>
+                </div>
+              </div>
+            </article>
+          </div>
+          <div class="empty-catalog" th:if="${products.empty}">
+            <svg viewBox="0 0 220 160" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#basket"></use></svg>
+            <p class="eyebrow">A fresh shelf is on its way</p><h3>Your shop is ready for its first good things.</h3><p>Products added by the seller will appear here. Add a few in the seller dashboard to get started.</p><a class="button-primary" th:href="@{/seller/login}">Open seller sign in <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="search-empty-state" id="search-empty-state" hidden><span aria-hidden="true">⌕</span><h3>No matches just yet</h3><p>Try another name or choose a different aisle.</p></div>
+          <nav class="pagination" aria-label="Product pages" th:if="${products.totalPages > 1}"><a th:if="${products.hasPrevious()}" th:href="@{/shop(page=${products.number - 1})}">← Previous</a><span>Page <b th:text="${products.number + 1}">1</b> of <b th:text="${products.totalPages}">1</b></span><a th:if="${products.hasNext()}" th:href="@{/shop(page=${products.number + 1})}">Next →</a></nav>
+        </div>
+
+        <aside class="cart-panel" id="cart-panel" aria-labelledby="cart-title">
+          <div class="cart-title-row"><span class="cart-symbol" aria-hidden="true">♧</span><div><p class="eyebrow">YOUR GOOD STUFF</p><h2 id="cart-title">Your basket</h2></div><span class="cart-count" th:text="${cartCount}">0</span></div>
+          <p class="cart-empty" th:if="${cartLines.empty}">Your basket is waiting for something lovely.</p>
+          <div class="cart-line" th:each="line : ${cartLines}">
+            <span class="cart-line-art" aria-hidden="true"><svg viewBox="0 0 220 160"><use href="/images/mega-mart-illustrations.svg#pantry"></use></svg></span>
+            <span class="cart-line-copy"><b th:text="${line.product.name}">Product</b><small><span th:text="${line.quantity}">1</span> × ₹<span th:text="${line.product.price}">0.00</span></small></span>
+            <strong>₹<span th:text="${line.lineTotal}">0.00</span></strong>
+            <form th:action="@{/shop/cart/remove}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><input type="hidden" name="productId" th:value="${line.product.id}"><button class="remove-line" type="submit" th:attr="aria-label=|Remove ${line.product.name}|">×</button></form>
+          </div>
+          <div class="cart-subtotal" th:if="${!cartLines.empty}"><span>Subtotal</span><b>₹<span th:text="${cartTotal}">0.00</span></b></div>
+          <p class="cart-payment"><span aria-hidden="true">✓</span> Cash on delivery</p>
+          <a class="checkout-button" th:classappend="${cartLines.empty ? ' checkout-disabled' : ''}" th:href="${cartLines.empty ? '/shop#products' : '/shop/checkout'}"><span th:text="${cartLines.empty ? 'Find something tasty' : 'Continue to checkout'}">Continue to checkout</span><span aria-hidden="true">↗</span></a>
+          <p class="cart-footnote">Your address and contact details are entered at checkout.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="customer-orders" id="customer-orders" th:if="${customerOrders != null and !customerOrders.empty}" aria-labelledby="orders-title">
+      <div class="section-heading"><div><p class="eyebrow">YOUR RECENT SHOPPING</p><h2 id="orders-title">Order updates</h2><p>See what’s happening with your latest orders on this device.</p></div></div>
+      <article class="customer-order-card" th:each="order : ${customerOrders}">
+        <div class="customer-order-heading"><div><span class="order-number" th:text="|Order #${order.orderId}|">Order</span><small>Order status updates</small></div><span class="order-status" th:attr="data-status=${order.orderStatus}" th:text="${#strings.replace(order.orderStatus.name(), '_', ' ')}">PLACED</span></div>
+        <div class="order-progress" aria-label="Order progress"><span th:classappend="${order.orderStatus.name() != 'CANCELLED' ? ' step-done' : ''}">Placed</span><span th:classappend="${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'OUT_FOR_DELIVERY' or order.orderStatus.name() == 'DELIVERED' ? ' step-done' : ''}">Packing</span><span th:classappend="${order.orderStatus.name() == 'OUT_FOR_DELIVERY' or order.orderStatus.name() == 'DELIVERED' ? ' step-done' : ''}">On the way</span><span th:classappend="${order.orderStatus.name() == 'DELIVERED' ? ' step-done' : ''}">Delivered</span></div>
+        <p class="order-items" th:each="item : ${order.items}" th:text="|${item.quantity} × ${item.productName}|">Item</p>
+        <div class="order-total"><span>Cash on delivery</span><b>₹<span th:text="${order.totalAmount}">0.00</span></b></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="market-footer"><a class="brand footer-brand" th:href="@{/shop}"><span class="brand-icon" aria-hidden="true">✿</span><span class="brand-copy"><b>Mega<span>Mart</span></b><small>Good things, close to home</small></span></a><span>Good food makes good days. <b>© 2026 Mega Mart</b></span><a th:href="@{/seller/login}">Seller sign in ↗</a></footer>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087a4b">
+  <title>Checkout · Mega Mart</title>
+  <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/marketplace.css}">
+</head>
+<body class="marketplace">
+  <div class="top-strip"><span>✦ Your fresh finds are almost ready</span><a th:href="@{/shop}">Back to shopping <span aria-hidden="true">→</span></a></div>
+  <header class="market-header"><div class="market-header-inner"><a class="brand" th:href="@{/shop}" aria-label="Mega Mart home"><span class="brand-icon" aria-hidden="true">✿</span><span class="brand-copy"><b>Mega<span>Mart</span></b><small>Good things, close to home</small></span></a><a class="checkout-secure" th:href="@{/shop}">← Keep shopping</a></div></header>
+  <main class="checkout-main">
+    <a class="back-link" th:href="@{/shop}">← Back to your basket</a>
+    <div class="checkout-intro"><p class="eyebrow">JUST ONE LAST STEP</p><h1>Where should we bring it?</h1><p>Your seller will use these details to prepare and deliver your order.</p></div>
+    <div class="checkout-layout">
+      <section class="checkout-card">
+        <div class="checkout-card-title"><span class="checkout-step">1</span><div><h2>Delivery details</h2><p>Enter the name, phone number and written address for this order.</p></div></div>
+        <p class="feedback-message error-message" th:if="${checkoutError}" th:text="${checkoutError}"></p>
+        <form class="checkout-form" th:action="@{/shop/orders}" th:object="${form}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <label for="recipientName">Recipient name</label><input id="recipientName" type="text" th:field="*{recipientName}" maxlength="120" autocomplete="name" placeholder="Who will receive the order?" required><span class="field-error" th:if="${#fields.hasErrors('recipientName')}" th:errors="*{recipientName}"></span>
+          <label for="phone">Phone number</label><input id="phone" type="tel" th:field="*{phone}" maxlength="24" autocomplete="tel" inputmode="tel" placeholder="A number the seller can call" required><span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span><small class="form-hint">The seller receives this number with your order.</small>
+          <label for="deliveryAddress">Delivery address</label><textarea id="deliveryAddress" th:field="*{deliveryAddress}" maxlength="1000" autocomplete="street-address" placeholder="Flat or house, street, area, city, PIN code and landmark" required></textarea><span class="field-error" th:if="${#fields.hasErrors('deliveryAddress')}" th:errors="*{deliveryAddress}"></span>
+          <div class="cod-card"><span class="cod-icon" aria-hidden="true">₹</span><span><b>Cash on delivery</b><small>Pay the seller in cash when your order arrives. No online payment.</small></span></div>
+          <button class="place-order-button" type="submit">Place my order <span aria-hidden="true">↗</span></button>
+        </form>
+      </section>
+      <aside class="checkout-card checkout-summary">
+        <div class="checkout-card-title"><span class="checkout-step checkout-step-orange">2</span><div><h2>Your basket</h2><p>Everything you picked, in one place.</p></div></div>
+        <div class="summary-line" th:each="line : ${cartLines}"><span><b th:text="${line.quantity}">1</b> × <span th:text="${line.product.name}">Product</span></span><strong>₹<span th:text="${line.lineTotal}">0.00</span></strong></div>
+        <div class="summary-total"><span>Total due on delivery</span><strong>₹<span th:text="${cartTotal}">0.00</span></strong></div>
+        <div class="summary-note"><span aria-hidden="true">✿</span><p>Your seller will see your recipient name, phone number and written delivery address.</p></div>
+        <a class="summary-back-link" th:href="@{/shop}">Add something else <span aria-hidden="true">↗</span></a>
+      </aside>
+    </div>
+  </main>
+  <footer class="market-footer"><a class="brand footer-brand" th:href="@{/shop}"><span class="brand-icon" aria-hidden="true">✿</span><span class="brand-copy"><b>Mega<span>Mart</span></b><small>Good things, close to home</small></span></a><span>Good food makes good days. <b>© 2026 Mega Mart</b></span><a th:href="@{/seller/login}">Seller sign in ↗</a></footer>
+</body>
+</html>
