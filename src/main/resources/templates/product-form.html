@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${formTitle} + ' · Mega Mart'">Product · Mega Mart</title>
+  <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+<body>
+<header><a th:href="@{/seller/orders}"><h1>Mega Mart · Seller</h1></a></header>
+<main>
+  <a th:href="@{/seller/products}">← Back to products</a>
+  <section class="panel">
+    <h2 th:text="${formTitle}">Product</h2>
+    <p class="error" th:if="${formError}" th:text="${formError}"></p>
+    <form th:action="${formAction}" th:object="${form}" method="post" enctype="multipart/form-data">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <label for="sku">SKU</label>
+      <input id="sku" th:field="*{sku}" maxlength="80" required>
+      <span class="field-error" th:if="${#fields.hasErrors('sku')}" th:errors="*{sku}"></span>
+      <label for="name">Product name</label>
+      <input id="name" th:field="*{name}" maxlength="160" required>
+      <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+      <label for="category">Category</label>
+      <input id="category" th:field="*{category}" maxlength="100" required>
+      <span class="field-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></span>
+      <label for="price">Price (₹)</label>
+      <input id="price" type="number" th:field="*{price}" min="0" step="0.01" required>
+      <span class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+      <label for="weight">Weight or size</label>
+      <input id="weight" th:field="*{weight}" maxlength="80">
+      <label for="heightPreference">Additional product detail</label>
+      <input id="heightPreference" th:field="*{heightPreference}" maxlength="80">
+      <label for="stockQuantity">Stock quantity</label>
+      <input id="stockQuantity" type="number" th:field="*{stockQuantity}" min="0" step="1" required>
+      <span class="field-error" th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}"></span>
+      <label for="imageUrl">Image URL (optional)</label>
+      <input id="imageUrl" type="url" th:field="*{imageUrl}" maxlength="2048" placeholder="https://…">
+      <p class="hint">Or choose a product photo from your device. JPG, PNG, WEBP, or GIF; up to 5 MB.</p>
+      <label class="file-picker" for="imageFile">Choose photo from gallery</label>
+      <input id="imageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+      <img class="seller-photo-preview" th:if="${form.imageUrl != null and !#strings.isEmpty(form.imageUrl)}"
+           th:src="${form.imageUrl}" alt="Current product photo" onerror="this.hidden=true">
+      <img class="seller-photo-preview" id="imagePreview" alt="Selected product photo" hidden>
+      <div class="actions"><button type="submit" th:text="${formTitle}">Save product</button></div>
+    </form>
+  </section>
+</main>
+<script>
+  const imageInput = document.getElementById('imageFile');
+  const preview = document.getElementById('imagePreview');
+  imageInput?.addEventListener('change', () => {
+    if (!imageInput.files?.[0]) { preview.hidden = true; return; }
+    preview.src = URL.createObjectURL(imageInput.files[0]);
+    preview.hidden = false;
+  });
+</script>
+</body>
+</html>

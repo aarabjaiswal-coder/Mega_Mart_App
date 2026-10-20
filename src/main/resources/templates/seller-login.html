@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seller sign in · Mega Mart</title>
+  <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+<body>
+<header><a th:href="@{/shop}"><h1>Mega Mart · Seller</h1></a></header>
+<main>
+  <section class="panel auth">
+    <h2>Seller sign in</h2>
+    <p class="hint">Use the seller username and password configured in Railway.</p>
+    <p class="error" th:if="${param.error}">Sign-in failed. Check the username and password.</p>
+    <form th:action="@{/seller/login}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" autocomplete="current-password" required>
+      <div class="actions"><button type="submit">Sign in</button></div>
+    </form>
+  </section>
+</main>
+</body>
+</html>
