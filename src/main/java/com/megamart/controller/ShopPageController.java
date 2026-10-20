@@ -46,12 +46,17 @@ public class ShopPageController {
     }
 
     @GetMapping("/shop")
-    public String shop(@RequestParam(defaultValue = "0") int page, HttpSession session, Model model) {
+    public String shop(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) String category,
+                       HttpSession session, Model model) {
         int safePage = Math.max(0, page);
-        Page<ProductResponse> products = productService.list(null,
+        String selectedCategory = category == null || category.isBlank() ? null : category.trim();
+        Page<ProductResponse> products = productService.list(selectedCategory,
                 PageRequest.of(safePage, PAGE_SIZE, Sort.by(Sort.Direction.ASC, "name")));
         List<CartLine> cartLines = cartLines(session);
         model.addAttribute("products", products);
+        model.addAttribute("categories", productService.categories());
+        model.addAttribute("selectedCategory", selectedCategory == null ? "" : selectedCategory);
         model.addAttribute("cartLines", cartLines);
         model.addAttribute("cartCount", cartLines.stream().mapToInt(CartLine::quantity).sum());
         model.addAttribute("cartTotal", total(cartLines));
