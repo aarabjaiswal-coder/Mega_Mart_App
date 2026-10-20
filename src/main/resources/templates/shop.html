@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8ef">
+  <title>Mega Mart Shop</title>
+  <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/styles.css}">
+  <link rel="stylesheet" th:href="@{/welcome.css}">
+  <script defer th:src="@{/js/app.js}"></script>
+</head>
+<body>
+<header class="site-header"><div class="row"><a th:href="@{/shop}"><h1>Mega Mart</h1></a><nav class="shop-nav"><a th:href="@{/shop#customer-orders}">My orders</a><a class="button" th:href="@{/seller/login}">Seller sign in ↗</a></nav></div></header>
+<section class="welcome-screen" id="welcome-screen" aria-label="Mega Mart welcome">
+  <div class="welcome-glow glow-one"></div><div class="welcome-glow glow-two"></div>
+  <div class="welcome-orbit orbit-one"></div><div class="welcome-orbit orbit-two"></div>
+  <div class="welcome-leaf leaf-one">✦</div><div class="welcome-leaf leaf-two">✳</div><div class="welcome-leaf leaf-three">✧</div>
+  <div class="welcome-brand"><div class="welcome-logo"><svg viewBox="0 0 160 145" role="img" aria-label="Mega Mart grocery cart logo">
+    <path class="logo-cart" d="M16 20h17l17 76c1.5 6.4 6.8 10.8 13.4 10.8H123c6 0 10.8-3.9 12.6-9.4L150 48H44"/><path class="logo-cart" d="M63 125a9.5 9.5 0 1 0 0 .1M119 125a9.5 9.5 0 1 0 0 .1"/>
+    <path class="logo-leaf" d="M82 45c7-18 27-23 40-20-2 15-15 28-32 29"/><path class="logo-leaf logo-leaf-two" d="M92 50c-.2-13-7-21-17-25"/><path class="logo-produce" d="M91 44c-3-18 3-31 12-35 10 11 9 24 2 37M105 43c5-15 17-22 27-17-1 13-10 22-25 25"/>
+  </svg></div><div class="welcome-wordmark">Mega Mart<span>.</span></div><p>Good things, ready for your week.</p></div>
+  <div class="welcome-butterfly" aria-hidden="true"><svg viewBox="0 0 100 100"><g class="welcome-wing"><path d="M48 48C30 7 4 8 9 38c3 20 21 24 39 15Z" fill="#b4ff9b"/><path d="M45 51C22 54 9 69 22 83c13 13 24-15 28-29Z" fill="#54f58a"/></g><g class="welcome-wing wing-right"><path d="M52 48C70 7 96 8 91 38c-3 20-21 24-39 15Z" fill="#d0ffae"/><path d="M55 51c23 3 36 18 23 32-13 13-24-15-28-29Z" fill="#7bffa4"/></g><ellipse cx="50" cy="52" rx="4" ry="19" fill="#294c3d"/><path d="M48 36c-8-8-10-13-14-18m18 18c8-8 10-13 14-18" fill="none" stroke="#294c3d" stroke-width="2" stroke-linecap="round"/></svg></div>
+  <div class="welcome-bottom"><span>Fresh food. Pantry staples. Home essentials.</span><a class="welcome-seller-link" th:href="@{/seller/login}">Seller sign-in <span aria-hidden="true">↗</span></a></div>
+</section>
+<main>
+  <div class="row">
+    <div><h2>Shop</h2><p class="hint">Choose products and add them to your order.</p></div>
+    <a class="button" th:href="@{/shop/checkout}">Checkout (<span th:text="${cartCount}">0</span>)</a>
+  </div>
+
+  <p class="notice" th:if="${orderPlaced}"><span th:text="${orderPlaced}"></span> <a href="#customer-orders">Track it below ↓</a></p>
+  <p class="notice" th:if="${shopMessage}" th:text="${shopMessage}"></p>
+  <p class="error" th:if="${shopError}" th:text="${shopError}"></p>
+
+  <div class="layout">
+    <section>
+      <div class="grid" th:if="${!products.empty}">
+        <article class="product" th:each="product : ${products.content}">
+          <img class="product-image" th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
+               th:src="${product.imageUrl}" th:alt="${product.name}" loading="lazy" onerror="this.hidden=true; this.nextElementSibling.classList.remove('placeholder-hidden')">
+          <div class="product-placeholder" th:classappend="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl) ? ' placeholder-hidden' : ''}" aria-hidden="true">
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'fruit')}">🍎</span>
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'vegetable')}">🥬</span>
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'dairy')}">🥛</span>
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'bakery')}">🍞</span>
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'drink')}">🧃</span>
+            <span th:if="${#strings.containsIgnoreCase(product.category, 'snack')}">🍪</span>
+            <span th:if="${!#strings.containsIgnoreCase(product.category, 'fruit') and !#strings.containsIgnoreCase(product.category, 'vegetable') and !#strings.containsIgnoreCase(product.category, 'dairy') and !#strings.containsIgnoreCase(product.category, 'bakery') and !#strings.containsIgnoreCase(product.category, 'drink') and !#strings.containsIgnoreCase(product.category, 'snack')}">🛍️</span>
+          </div>
+          <h3 th:text="${product.name}">Product name</h3>
+          <p class="meta">
+            <span th:text="${product.category}">Category</span>
+            <span th:if="${product.weight != null}" th:text="${' · ' + product.weight}"> · weight</span>
+          </p>
+          <p class="price">₹<span th:text="${product.price}">0.00</span></p>
+          <p class="meta" th:text="${product.inStock ? 'In stock: ' + product.stockQuantity : 'Out of stock'}">Stock</p>
+          <form th:action="@{/shop/cart/add}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="productId" th:value="${product.id}">
+            <label th:for="|quantity-${product.id}|">Quantity</label>
+            <input type="number" name="quantity" min="1" max="99" value="1"
+                   th:id="|quantity-${product.id}|" th:disabled="${!product.inStock}">
+            <div class="actions"><button class="add-to-order" type="submit" th:disabled="${!product.inStock}">Add to order</button></div>
+          </form>
+        </article>
+      </div>
+      <p class="empty" th:if="${products.empty}">No products are available right now.</p>
+      <nav class="toolbar" aria-label="Product pages" th:if="${products.totalPages > 1}">
+        <a class="button secondary" th:if="${products.hasPrevious()}" th:href="@{/shop(page=${products.number - 1})}">Previous</a>
+        <span class="meta">Page <span th:text="${products.number + 1}">1</span> of <span th:text="${products.totalPages}">1</span></span>
+        <a class="button secondary" th:if="${products.hasNext()}" th:href="@{/shop(page=${products.number + 1})}">Next</a>
+      </nav>
+    </section>
+
+    <aside class="panel">
+      <h2>Your order</h2>
+      <p class="meta" th:if="${cartLines.empty}">Your cart is empty.</p>
+      <div class="row" th:each="line : ${cartLines}">
+        <span><span th:text="${line.product.name}">Product</span> × <span th:text="${line.quantity}">1</span></span>
+        <form th:action="@{/shop/cart/remove}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <input type="hidden" name="productId" th:value="${line.product.id}">
+          <button type="submit" class="secondary">Remove</button>
+        </form>
+      </div>
+      <p class="price" th:if="${!cartLines.empty}">Total: ₹<span th:text="${cartTotal}">0.00</span></p>
+      <a class="button" th:if="${!cartLines.empty}" th:href="@{/shop/checkout}">Continue to checkout</a>
+    </aside>
+  </div>
+
+  <section class="customer-dashboard" id="customer-orders">
+    <div class="customer-dashboard-heading"><div><p class="eyebrow">CUSTOMER DASHBOARD</p><h2>Your recent orders</h2><p class="hint">Track order updates here on this device.</p></div><span class="order-count" th:text="${customerOrders.size() + ' orders'}">0 orders</span></div>
+    <p class="empty" th:if="${customerOrders.empty}">Your placed orders will appear here with live status updates.</p>
+    <article class="customer-order-card" th:each="order : ${customerOrders}">
+      <div class="customer-order-top"><div><span class="order-number" th:text="|Order #${order.orderId}|">Order</span><span class="order-date" th:text="${order.createdAt}">Date</span></div><span class="status-pill" th:attr="data-status=${order.orderStatus.name()}" th:classappend="| status-${#strings.toLowerCase(order.orderStatus.name())}|" th:text="${#strings.replace(order.orderStatus.name(), '_', ' ')}">PLACED</span></div>
+      <div class="order-progress" th:if="${order.orderStatus.name() != 'CANCELLED'}"><span th:classappend="${order.orderStatus.name() == 'PLACED' or order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'OUT_FOR_DELIVERY' or order.orderStatus.name() == 'DELIVERED' ? 'done' : ''}">Placed</span><i></i><span th:classappend="${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'OUT_FOR_DELIVERY' or order.orderStatus.name() == 'DELIVERED' ? 'done' : ''}">Preparing</span><i></i><span th:classappend="${order.orderStatus.name() == 'OUT_FOR_DELIVERY' or order.orderStatus.name() == 'DELIVERED' ? 'done' : ''}">On the way</span><i></i><span th:classappend="${order.orderStatus.name() == 'DELIVERED' ? 'done' : ''}">Delivered</span></div>
+      <p class="cancelled-note" th:if="${order.orderStatus.name() == 'CANCELLED'}">This order was cancelled.</p>
+      <div class="customer-order-items"><div class="customer-order-item" th:each="item : ${order.items}"><img loading="lazy" th:src="@{/api/products/{id}/image(id=${item.productId})}" th:alt="${item.productName}" onerror="this.hidden=true; this.nextElementSibling.hidden=false"><span class="mini-product-placeholder" hidden>🛍️</span><span th:text="|${item.quantity} × ${item.productName}|">Item</span></div></div>
+      <div class="customer-order-bottom"><span>Delivery address: <b th:text="${order.deliveryAddress}">Address</b></span><strong>₹<span th:text="${order.totalAmount}">0</span> · COD</strong></div>
+    </article>
+  </section>
+
+  <footer class="footer"><a th:href="@{/seller/login}">Seller sign in</a></footer>
+</main>
+</body>
+</html>

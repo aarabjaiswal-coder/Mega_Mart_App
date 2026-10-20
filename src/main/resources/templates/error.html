@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request problem · Mega Mart</title>
+  <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+<body>
+<header><a th:href="@{/shop}"><h1>Mega Mart</h1></a></header>
+<main>
+  <section class="panel">
+    <h2>We couldn't complete that</h2>
+    <p th:text="${message}">Please go back and try again.</p>
+    <a class="button" th:href="@{/shop}">Return to shop</a>
+  </section>
+</main>
+</body>
+</html>
