@@ -1,4 +1,4 @@
-# Mega Mart Fullstack O2
+# Mega Mart 
 
 Mega Mart is a Java 17 and Spring Boot shop with a PostgreSQL database. The same Java application serves the customer shop, the seller dashboard, and JSON REST endpoints. It does not need a Node.js server.
 
@@ -13,7 +13,7 @@ Mega Mart is a Java 17 and Spring Boot shop with a PostgreSQL database. The same
 - Orders and products persist in PostgreSQL. Stock is locked and checked during checkout to prevent overselling.
 - New-order alert on the seller dashboard; the page refreshes every 15 seconds while open. Orders remain saved if the seller is away.
 - Illustrated opening gateway and flying butterflies when adding items to the basket.
-- REST API, request validation, pagination, database migrations, and Railway Docker deployment configuration.
+- REST API, request validation, pagination, database migrations, and Docker deployment configuration.
 
 There is no OTP/SMS, maps/geolocation, payment provider, or outbound third-party service integration. Checkout accepts the recipient details directly. Customer OTP login is not included because it requires an OTP provider.
 
@@ -56,7 +56,7 @@ The seller account is configured through `SELLER_USERNAME` and `SELLER_PASSWORD`
 
 | Method | Endpoint | Access | Purpose |
 |---|---|---|---|
-| `GET` | `/api/health` | Public | Health status for Railway |
+| `GET` | `/api/health` | Public | Backend health check |
 | `GET` | `/api/products?page=0&size=24` | Public | Active product catalog; optional `category` filter |
 | `GET` | `/api/products/categories` | Public | Active categories |
 | `GET` | `/api/products/{id}` | Public | One active product |
@@ -88,34 +88,34 @@ Example order request:
 
 The server calculates the order total from current product offer prices (when set), regular prices, and stock. It ignores client-supplied totals. Order status changes are validated by the server.
 
-## Deploy to Railway
+## Deploy the backend to Render with Supabase PostgreSQL
 
-1. Create a new GitHub repository. Upload the **contents of this folder** at the repository root so `Dockerfile`, `pom.xml`, `railway.json`, and `src/` are at the top level.
-2. In Railway, add a PostgreSQL service and a web service connected to this GitHub repository.
-3. Set the web service variables:
+1. Connect this project to Render as a **Web Service**. If `Dockerfile`, `pom.xml`, and `src/` are at the repository root, leave **Root Directory** blank. Set **Docker Build Context Directory** to `.` and **Dockerfile Path** to `./Dockerfile`.
+2. Set the Render health check path to `/api/health`. Leave Docker Command and Pre-Deploy Command blank; Flyway runs database migrations when Spring starts.
+3. In Render Environment settings, set:
 
 ```text
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+DATABASE_JDBC_URL=<Supabase JDBC connection string>
 SELLER_USERNAME=your-seller-login
 SELLER_PASSWORD=your-unique-password-at-least-12-characters
 SESSION_COOKIE_SECURE=true
 ```
 
-Use the actual Railway PostgreSQL service name in the `DATABASE_URL` reference. The app accepts Railway's `postgresql://` URL and converts it to JDBC internally. Railway provides `PORT`; the included `railway.json` uses `/api/health` as its health check.
+Use the JDBC connection string copied from Supabase Connect, with your database password entered in the string and `sslmode=require` included. Keep it private. Render provides `PORT`; the app uses it automatically. `/api/health` is the health endpoint.
 
 `APP_CORS_ALLOWED_ORIGINS` is only needed when a separate mobile/web client calls the JSON API from another origin. Set it to the exact origin(s), comma-separated. `WAREHOUSE_API_KEY` is optional; leave it unset if no warehouse sync client will use the endpoint.
 
 ## Optional Vercel gateway
 
-The `vercel-frontend/` folder contains a static Vercel opening page for the existing Spring Boot application. In Vercel, import this repository and set **Root Directory** to `vercel-frontend`; choose **Other** as the framework preset, with no build command. Before deploying, edit `vercel-frontend/vercel.json` and set the rewrite destination to the public URL of the deployed Spring Boot app. Vercel serves the customer/seller gateway and forwards shop, checkout, seller, API, and backend asset paths to Spring Boot. The Java backend and PostgreSQL database must remain deployed separately. The product cart butterfly animation is still run by the backend storefront's `static/js/app.js`.
+The `vercel-frontend/` folder contains a static Vercel opening page for the existing Spring Boot application. In Vercel, import this repository and set **Root Directory** to `vercel-frontend`; choose **Other** as the framework preset, with no build command. Its `vercel.json` rewrite currently points to `https://mega-mart-app.onrender.com`. If your Render URL changes, update that destination. Vercel serves the customer/seller gateway and forwards shop, checkout, seller, API, and backend asset paths to Spring Boot. The Java backend and PostgreSQL database remain deployed separately. The product cart butterfly animation runs in the backend's `static/js/app.js`.
 
 ## Operations and limits
 
 - Seller dashboard order refresh is in-app only. It does not send SMS/email notifications while the seller dashboard is closed.
-- Seller product forms accept an image URL or an image selected from the device gallery. Uploaded JPG, PNG, WEBP, and GIF images (up to 5 MB) are stored in PostgreSQL by Flyway migration V6, so they survive Railway redeploys.
+- Seller product forms accept an image URL or an image selected from the device gallery. Uploaded JPG, PNG, WEBP, and GIF images (up to 5 MB) are stored in PostgreSQL by Flyway migration V6, so they survive backend redeploys.
 - Flyway migration V7 adds the nullable product offer price. Existing products keep their regular price and remain available without edits.
 - `marketplace.css`, `styles.css`, JavaScript, favicon, and illustration assets are explicitly public so the welcome, shop, and seller interfaces can load their designs after deployment.
 - The shop shows each customer's latest 10 orders for the current browser session and refreshes every 20 seconds while an order is active. This is session-based order history, not customer OTP/account login; a new device or expired session will not show that history.
 - The optional warehouse endpoint is a first-party REST route, not a payment or maps gateway.
-- The project is configured for Railway and PostgreSQL but has not been load-tested. Actual capacity depends on the Railway service and database resources.
-- Do not commit `.env` or real credentials. Use Railway Variables for production secrets.
+- The project is configured for a Docker-based backend host and PostgreSQL but has not been load-tested. Actual capacity depends on the chosen service and database resources.
+- Do not commit `.env` or real credentials. Use Render Environment settings for production secrets.
