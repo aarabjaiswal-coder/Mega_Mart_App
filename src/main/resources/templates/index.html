@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#075c3b">
+  <meta name="description" content="Shop your neighborhood groceries or open the Mega Mart seller dashboard.">
+  <title>Welcome to Mega Mart</title>
+  <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/marketplace.css}">
+</head>
+<body class="welcome-page">
+  <header class="welcome-header">
+    <a class="welcome-brand" th:href="@{/}" aria-label="Mega Mart home">
+      <span class="welcome-brand-mark" aria-hidden="true">✿</span>
+      <span>Mega<span>Mart</span><small>GOOD THINGS, CLOSE TO HOME</small></span>
+    </a>
+    <span class="welcome-freshness"><i aria-hidden="true"></i> Your neighborhood store</span>
+  </header>
+
+  <main class="welcome-main">
+    <section class="welcome-hero">
+      <div class="welcome-copy">
+        <p class="welcome-eyebrow">FRESH FINDS · EASY DAYS</p>
+        <h1>Good things,<br><em>close to home.</em></h1>
+        <p>Pick a path and let’s get started. Shop for your home, or manage your Mega Mart store.</p>
+      </div>
+      <div class="welcome-art" role="img" aria-label="Illustrated basket full of fresh groceries">
+        <span class="welcome-sun"></span>
+        <svg viewBox="0 0 700 520" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#hero-basket"></use></svg>
+        <svg class="welcome-butterfly" viewBox="0 0 100 100" aria-hidden="true"><use href="/images/mega-mart-illustrations.svg#butterfly"></use></svg>
+      </div>
+    </section>
+
+    <section class="gateway-grid" aria-label="Choose how to use Mega Mart">
+      <article class="gateway-card gateway-customer">
+        <span class="gateway-icon" aria-hidden="true">🛍️</span>
+        <p class="welcome-eyebrow">FOR YOUR HOME</p>
+        <h2>Shop groceries</h2>
+        <p>Browse fresh produce, pantry favorites and everyday essentials. Pay with cash when your order arrives.</p>
+        <a class="gateway-button gateway-button-primary" th:href="@{/shop}">Start shopping <span aria-hidden="true">↗</span></a>
+      </article>
+      <article class="gateway-card gateway-seller">
+        <span class="gateway-icon" aria-hidden="true">✿</span>
+        <p class="welcome-eyebrow">FOR YOUR STORE</p>
+        <h2>Seller dashboard</h2>
+        <p>Review incoming orders, update delivery status, manage grocery categories and create offers.</p>
+        <a class="gateway-button gateway-button-secondary" th:href="@{/seller/login}">Seller sign in <span aria-hidden="true">↗</span></a>
+      </article>
+    </section>
+    <p class="welcome-footnote"><span aria-hidden="true">✓</span> Simple ordering · Cash on delivery · Your seller gets the address you enter</p>
+  </main>
+</body>
+</html>
