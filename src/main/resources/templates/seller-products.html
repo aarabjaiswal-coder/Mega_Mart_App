@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#075c3b">
+  <title>Products · Mega Mart Seller</title>
+  <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+<body class="seller-page">
+<header class="seller-header">
+  <div class="row seller-header-row">
+    <a class="seller-brand" th:href="@{/seller/orders}"><span class="seller-brand-icon">✿</span><span>Mega Mart <small>SELLER STUDIO</small></span></a>
+    <form th:action="@{/seller/logout}" method="post"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="secondary">Sign out</button></form>
+  </div>
+</header>
+<main class="seller-main">
+  <nav class="seller-tabs" aria-label="Seller dashboard"><a th:href="@{/seller/orders}">Orders</a><a class="active" th:href="@{/seller/products}">Products</a><a th:href="@{/seller/offers}">Offers</a></nav>
+  <div class="seller-page-heading"><div><p class="seller-kicker">YOUR STORE, YOUR SHELF</p><h1>Products</h1><p class="hint">Keep your grocery shelf fresh and up to date.</p></div><a class="button" th:href="@{/seller/products/new}"><span aria-hidden="true">＋</span> Add product</a></div>
+  <p class="success seller-flash" th:if="${sellerMessage}" th:text="${sellerMessage}"></p>
+  <p class="error seller-flash" th:if="${sellerError}" th:text="${sellerError}"></p>
+  <section class="seller-card">
+    <div class="seller-card-heading"><div><h2>Your catalog</h2><p>Product details customers will see in the shop.</p></div><span class="seller-count" th:text="|${products.totalElements} items|">0 items</span></div>
+    <p class="empty" th:if="${products.empty}">No products yet. Add your first item and it will appear in the customer shop.</p>
+    <div class="table-wrap" th:if="${!products.empty}">
+      <table class="seller-products-table">
+        <thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="product : ${products.content}">
+          <td><div class="seller-product-cell"><span class="seller-product-thumb"><img th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}" th:src="${product.imageUrl}" th:alt="${product.name}" loading="lazy" onerror="this.hidden=true; this.nextElementSibling.classList.remove('image-placeholder-hidden')"><svg th:classappend="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl) ? ' image-placeholder-hidden' : ''}" viewBox="0 0 220 160" aria-hidden="true"><use th:attr="href=|/images/mega-mart-illustrations.svg#${product.illustrationId()}|"></use></svg></span><span><b th:text="${product.name}">Product</b><small th:text="${product.category}">Category</small></span></div></td>
+          <td class="seller-sku" th:text="${product.sku}">SKU</td>
+          <td class="seller-price"><span th:if="${product.offerPrice != null}" class="seller-offer-price">₹<span th:text="${product.offerPrice}">0.00</span></span><span th:if="${product.offerPrice == null}">₹<span th:text="${product.price}">0.00</span></span><small th:if="${product.offerPrice != null}" class="seller-original-price">Regular ₹<span th:text="${product.price}">0.00</span></small></td>
+          <td><span class="seller-stock" th:classappend="${product.stockQuantity > 0 ? ' stock-available' : ' stock-empty'}" th:text="|${product.stockQuantity} in stock|">0 in stock</span></td>
+          <td><a class="seller-edit-link" th:href="@{/seller/products/{id}/edit(id=${product.id})}">Edit <span aria-hidden="true">↗</span></a></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <nav class="toolbar seller-pagination" aria-label="Product pages" th:if="${products.totalPages > 1}">
+    <a class="button secondary" th:if="${products.hasPrevious()}" th:href="@{/seller/products(page=${products.number - 1})}">Previous</a>
+    <span class="meta">Page <span th:text="${products.number + 1}">1</span> of <span th:text="${products.totalPages}">1</span></span>
+    <a class="button secondary" th:if="${products.hasNext()}" th:href="@{/seller/products(page=${products.number + 1})}">Next</a>
+  </nav>
+</main>
+</body>
+</html>
