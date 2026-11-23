@@ -132,17 +132,9 @@ public class ShopPageController {
             return "checkout";
         }
         try {
-            SupabaseAuthService.CustomerIdentity identity = authService.verifyBearerToken(
-                    customerAccessToken == null ? null : "Bearer " + customerAccessToken);
-            List<CartItemRequest> items = cartLines.stream()
-                    .map(line -> new CartItemRequest(line.product().id(), line.quantity()))
-                    .toList();
-            OrderResponse placedOrder = orderService.placeOrder(form.getRecipientName(), form.getPhone(),
-                    form.getDeliveryAddress(), identity.userId(), items);
-            Long orderId = placedOrder.orderId();
-            session.removeAttribute(CART_KEY);
+            OrderResponse placedOrder = createCustomerOrder(form, customerAccessToken, cartLines, session);
             redirectAttributes.addFlashAttribute("orderPlaced",
-                    "Order #" + orderId + " placed. Payment is Cash on Delivery.");
+                    "Order #" + placedOrder.orderId() + " placed. Payment is Cash on Delivery.");
             return "redirect:/shop#customer-orders";
         } catch (BusinessException exception) {
             model.addAttribute("checkoutError", exception.getMessage());
@@ -153,6 +145,51 @@ public class ShopPageController {
             addCheckoutCart(model, cartLines);
             return "checkout";
         }
+    }
+
+    @PostMapping(value = "/shop/orders", headers = "X-Requested-With=XMLHttpRequest")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> placeOrderAjax(@Valid @ModelAttribute("form") CheckoutForm form,
+                                                               BindingResult bindingResult,
+                                                               @RequestParam(required = false) String customerAccessToken,
+                                                               HttpSession session) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Check the name, phone number and delivery address, then try again."));
+        }
+
+        List<CartLine> cartLines = cartLines(session);
+        if (cartLines.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Your cart is empty."));
+        }
+
+        try {
+            OrderResponse placedOrder = createCustomerOrder(form, customerAccessToken, cartLines, session);
+            return ResponseEntity.status(201).body(Map.of(
+                    "success", true,
+                    "orderId", placedOrder.orderId(),
+                    "message", "Order #" + placedOrder.orderId() + " placed. Payment is Cash on Delivery."));
+        } catch (BusinessException exception) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", exception.getMessage()));
+        } catch (ResponseStatusException exception) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "Your Google sign-in expired. Sign in again before placing the order."));
+        }
+    }
+
+    private OrderResponse createCustomerOrder(CheckoutForm form, String customerAccessToken,
+                                               List<CartLine> cartLines, HttpSession session) {
+        SupabaseAuthService.CustomerIdentity identity = authService.verifyBearerToken(
+                customerAccessToken == null ? null : "Bearer " + customerAccessToken);
+        List<CartItemRequest> items = cartLines.stream()
+                .map(line -> new CartItemRequest(line.product().id(), line.quantity()))
+                .toList();
+        OrderResponse placedOrder = orderService.placeOrder(form.getRecipientName(), form.getPhone(),
+                form.getDeliveryAddress(), identity.userId(), items);
+        session.removeAttribute(CART_KEY);
+        return placedOrder;
     }
 
     private void addCheckoutCart(Model model, List<CartLine> lines) {
