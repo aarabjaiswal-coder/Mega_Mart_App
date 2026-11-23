@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "https://mega-mart-app.onrender.com/:path*"
-    }
-  ]
-}
