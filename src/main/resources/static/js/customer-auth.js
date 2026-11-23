@@ -97,9 +97,13 @@ if (authButton || checkoutForm || ordersSection) {
       }
     };
 
+    // Subscribe before reading the session so the OAuth callback's initial session
+    // event cannot be missed while this page is loading.
+    supabase.auth.onAuthStateChange((_event, nextSession) => {
+      queueMicrotask(() => { void syncSession(nextSession); });
+    });
     const { data: { session } } = await supabase.auth.getSession();
     await syncSession(session);
-    supabase.auth.onAuthStateChange((_event, nextSession) => { void syncSession(nextSession); });
     authButton?.addEventListener('click', async () => {
       const { data: { session: current } } = await supabase.auth.getSession();
       if (current) await supabase.auth.signOut();
