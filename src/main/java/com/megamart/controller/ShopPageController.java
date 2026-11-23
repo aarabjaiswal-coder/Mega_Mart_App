@@ -1,6 +1,7 @@
 package com.megamart.controller;
 
 import com.megamart.dto.order.CartItemRequest;
+import com.megamart.dto.order.CartSummaryResponse;
 import com.megamart.dto.order.CheckoutForm;
 import com.megamart.dto.product.ProductResponse;
 import com.megamart.exception.BusinessException;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -72,30 +75,32 @@ public class ShopPageController {
                             @RequestParam(defaultValue = "1") int quantity,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
-        try {
-            if (quantity < 1 || quantity > 99) {
-                throw new BusinessException("Choose a quantity from 1 to 99.");
-            }
-            ProductResponse product = productService.get(productId);
-            Map<Long, Integer> cart = cart(session);
-            int requested = Math.addExact(cart.getOrDefault(productId, 0), quantity);
-            if (requested > product.stockQuantity()) {
-                throw new BusinessException("There is not enough stock for " + product.name() + ".");
-            }
-            cart.put(productId, requested);
-            session.setAttribute(CART_KEY, cart);
-            redirectAttributes.addFlashAttribute("shopMessage", product.name() + " added to your order.");
-        } catch (BusinessException | ArithmeticException exception) {
-            redirectAttributes.addFlashAttribute("shopError",
-                    exception instanceof BusinessException ? exception.getMessage() : "That quantity is too large.");
-        }
+        CartMutationResult result = addToCartState(productId, quantity, session);
+        redirectAttributes.addFlashAttribute(result.success() ? "shopMessage" : "shopError", result.message());
         return "redirect:/shop";
+    }
+
+    @PostMapping(value = "/shop/cart/add", headers = "X-Requested-With=XMLHttpRequest")
+    @ResponseBody
+    public ResponseEntity<CartSummaryResponse> addToCartAjax(@RequestParam Long productId,
+                                                              @RequestParam(defaultValue = "1") int quantity,
+                                                              HttpSession session) {
+        CartMutationResult result = addToCartState(productId, quantity, session);
+        return ResponseEntity.status(result.success() ? 200 : 400)
+                .body(cartSummary(session, result.message(), result.success()));
     }
 
     @PostMapping("/shop/cart/remove")
     public String removeFromCart(@RequestParam Long productId, HttpSession session) {
         cart(session).remove(productId);
         return "redirect:/shop";
+    }
+
+    @PostMapping(value = "/shop/cart/remove", headers = "X-Requested-With=XMLHttpRequest")
+    @ResponseBody
+    public ResponseEntity<CartSummaryResponse> removeFromCartAjax(@RequestParam Long productId, HttpSession session) {
+        cart(session).remove(productId);
+        return ResponseEntity.ok(cartSummary(session, "Item removed from your basket.", true));
     }
 
     @GetMapping("/shop/checkout")
@@ -159,6 +164,35 @@ public class ShopPageController {
         return lines.stream().map(CartLine::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    private CartSummaryResponse cartSummary(HttpSession session, String message, boolean success) {
+        List<CartLine> lines = cartLines(session);
+        List<CartSummaryResponse.Item> items = lines.stream()
+                .map(line -> new CartSummaryResponse.Item(line.product().id(), line.product().name(),
+                        line.quantity(), line.product().offerPrice() == null ? line.product().price() : line.product().offerPrice(),
+                        line.lineTotal()))
+                .toList();
+        return new CartSummaryResponse(lines.stream().mapToInt(CartLine::quantity).sum(), total(lines), items, message, success);
+    }
+
+    private CartMutationResult addToCartState(Long productId, int quantity, HttpSession session) {
+        try {
+            if (quantity < 1 || quantity > 99) throw new BusinessException("Choose a quantity from 1 to 99.");
+            ProductResponse product = productService.get(productId);
+            Map<Long, Integer> cart = cart(session);
+            int requested = Math.addExact(cart.getOrDefault(productId, 0), quantity);
+            if (requested > product.stockQuantity()) {
+                throw new BusinessException("There is not enough stock for " + product.name() + ".");
+            }
+            cart.put(productId, requested);
+            session.setAttribute(CART_KEY, cart);
+            return new CartMutationResult(product.name() + " added to your basket.", true);
+        } catch (BusinessException exception) {
+            return new CartMutationResult(exception.getMessage(), false);
+        } catch (ArithmeticException exception) {
+            return new CartMutationResult("That quantity is too large.", false);
+        }
+    }
+
     private List<CartLine> cartLines(HttpSession session) {
         Map<Long, Integer> cart = cart(session);
         List<CartLine> lines = new ArrayList<>();
@@ -194,4 +228,5 @@ public class ShopPageController {
     }
 
     public record CartLine(ProductResponse product, int quantity, BigDecimal lineTotal) { }
+    private record CartMutationResult(String message, boolean success) { }
 }
