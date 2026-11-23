@@ -97,6 +97,10 @@ if (authButton || checkoutForm || ordersSection) {
         if (submitButton) submitButton.disabled = !session;
       }
       if (customerAuthPage && !session) {
+        const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (returnTo === '/shop/checkout' || returnTo === '/shop#customer-orders') {
+          sessionStorage.setItem('megaMartAuthReturnTo', returnTo);
+        }
         window.location.replace('/?signin=required');
         return;
       }
@@ -106,14 +110,18 @@ if (authButton || checkoutForm || ordersSection) {
         welcomeRedirectStarted = true;
         const next = sessionStorage.getItem('megaMartAuthReturnTo');
         sessionStorage.removeItem('megaMartAuthReturnTo');
-        window.location.replace(next === '/shop/checkout' ? next : '/shop');
+        const destination = next === '/shop/checkout' || next === '/shop#customer-orders' ? next : '/shop';
+        window.location.replace(destination);
         return;
       }
 
       await loadCustomerOrders(session);
+      if (session && window.location.pathname === '/shop' && window.location.hash === '#customer-orders') {
+        requestAnimationFrame(() => ordersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
       if (session && window.location.pathname === '/shop') {
         const next = sessionStorage.getItem('megaMartAuthReturnTo');
-        if (next === '/shop/checkout') {
+        if (next === '/shop/checkout' || next === '/shop#customer-orders') {
           sessionStorage.removeItem('megaMartAuthReturnTo');
           window.location.replace(next);
         }
