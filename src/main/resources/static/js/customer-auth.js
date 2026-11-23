@@ -2,6 +2,7 @@ const authButton = document.querySelector('#customer-auth-button');
 const checkoutButton = document.querySelector('#checkout-google-sign-in');
 const checkoutForm = document.querySelector('#checkout-form');
 const tokenField = document.querySelector('#customer-access-token');
+const checkoutFeedback = document.querySelector('#checkout-feedback');
 const authRequired = document.querySelector('#checkout-auth-required');
 const ordersSection = document.querySelector('#customer-orders');
 const ordersList = document.querySelector('#customer-orders-list');
@@ -117,6 +118,11 @@ if (authButton || checkoutForm || ordersSection) {
 
       await loadCustomerOrders(session);
       if (session && window.location.pathname === '/shop' && window.location.hash === '#customer-orders') {
+        const confirmation = sessionStorage.getItem('megaMartOrderPlacedMessage');
+        if (confirmation) {
+          sessionStorage.removeItem('megaMartOrderPlacedMessage');
+          document.querySelector('.feedback-stack')?.prepend(make('p', 'feedback-message success-message', confirmation));
+        }
         requestAnimationFrame(() => ordersSection?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       }
       if (session && window.location.pathname === '/shop') {
@@ -159,6 +165,7 @@ if (authButton || checkoutForm || ordersSection) {
       if (submitButton) submitButton.disabled = true;
 
       void (async () => {
+        let hasSession = false;
         try {
           const { data: { session: current }, error } = await supabase.auth.getSession();
           if (error) throw error;
@@ -168,15 +175,41 @@ if (authButton || checkoutForm || ordersSection) {
             return;
           }
 
+          hasSession = true;
           tokenField.value = current.access_token;
-          HTMLFormElement.prototype.submit.call(checkoutForm);
+          if (checkoutFeedback) checkoutFeedback.hidden = true;
+          const response = await fetch(checkoutForm.action, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              Accept: 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams(new FormData(checkoutForm))
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.success) {
+            if (response.status === 401) {
+              hasSession = false;
+              if (authRequired) {
+                authRequired.hidden = false;
+                const message = authRequired.querySelector('p');
+                if (message) message.textContent = result.message || 'Your sign-in expired. Please sign in again.';
+              }
+            }
+            throw new Error(result.message || 'We could not place your order. Please try again.');
+          }
+
+          sessionStorage.removeItem('megaMartAuthReturnTo');
+          sessionStorage.setItem('megaMartOrderPlacedMessage', result.message);
+          window.location.assign('/shop#customer-orders');
         } catch (error) {
           checkoutForm.dataset.submitting = 'false';
-          if (authRequired) {
-            authRequired.hidden = false;
-            const message = authRequired.querySelector('p');
-            if (message) message.textContent = 'We could not confirm your Google sign-in. Please sign in again before placing the order.';
+          if (checkoutFeedback) {
+            checkoutFeedback.textContent = error.message || 'We could not place your order. Please try again.';
+            checkoutFeedback.hidden = false;
           }
+          if (submitButton) submitButton.disabled = !hasSession;
         }
       })();
     });
