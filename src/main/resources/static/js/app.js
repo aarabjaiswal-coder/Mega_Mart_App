@@ -59,8 +59,96 @@
     if (!feedback) return;
     const message = document.createElement('p');
     message.className = 'feedback-message error-message';
-    message.textContent = 'The basket could not be refreshed. Refresh the shop before trying again.';
+    message.textContent = 'We could not confirm that basket change. Check the basket before trying again.';
     feedback.replaceChildren(message);
+  };
+
+  const makeElement = (tag, className, text) => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  };
+
+  const money = (amount) => new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(amount) || 0);
+
+  const renderCartSummary = (summary) => {
+    const currentCart = document.querySelector('#cart-panel');
+    const currentCount = document.querySelector('#basket-count');
+    if (!currentCart || !currentCount || !Array.isArray(summary.items)) throw new Error('Basket elements are unavailable.');
+
+    const cart = document.createElement('aside');
+    cart.className = 'cart-panel';
+    cart.id = 'cart-panel';
+    cart.setAttribute('aria-labelledby', 'cart-title');
+
+    const title = makeElement('div', 'cart-title-row');
+    title.append(makeElement('span', 'cart-symbol', '♧'));
+    const titleCopy = makeElement('div');
+    titleCopy.append(makeElement('p', 'eyebrow', 'YOUR GOOD STUFF'), makeElement('h2', '', 'Your basket'));
+    titleCopy.querySelector('h2').id = 'cart-title';
+    title.append(titleCopy, makeElement('span', 'cart-count', String(summary.itemCount)));
+    cart.append(title);
+
+    if (summary.items.length === 0) {
+      cart.append(makeElement('p', 'cart-empty', 'Your basket is waiting for something lovely.'));
+    } else {
+      const csrfToken = document.querySelector('#cart-panel input[name="_csrf"]')?.value
+        || document.querySelector('.add-product-form input[name="_csrf"]')?.value || '';
+      summary.items.forEach((item) => {
+        const line = makeElement('div', 'cart-line');
+        const art = makeElement('span', 'cart-line-art');
+        art.setAttribute('aria-hidden', 'true');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 220 160');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '/images/mega-mart-illustrations.svg#pantry');
+        svg.append(use);
+        art.append(svg);
+
+        const copy = makeElement('span', 'cart-line-copy');
+        copy.append(makeElement('b', '', item.productName), makeElement('small', '', `${item.quantity} × ₹${money(item.unitPrice)}`));
+        const price = makeElement('strong', '', `₹${money(item.lineTotal)}`);
+        const removeForm = document.createElement('form');
+        removeForm.action = '/shop/cart/remove';
+        removeForm.method = 'post';
+        const csrf = makeElement('input');
+        csrf.type = 'hidden'; csrf.name = '_csrf'; csrf.value = csrfToken;
+        const productId = makeElement('input');
+        productId.type = 'hidden'; productId.name = 'productId'; productId.value = String(item.productId);
+        const removeButton = makeElement('button', 'remove-line', '×');
+        removeButton.type = 'submit';
+        removeButton.setAttribute('aria-label', `Remove ${item.productName}`);
+        removeForm.append(csrf, productId, removeButton);
+        line.append(art, copy, price, removeForm);
+        cart.append(line);
+      });
+
+      const subtotal = makeElement('div', 'cart-subtotal');
+      subtotal.append(makeElement('span', '', 'Subtotal'), makeElement('b', '', `₹${money(summary.subtotal)}`));
+      cart.append(subtotal);
+    }
+
+    const payment = makeElement('p', 'cart-payment');
+    payment.append(makeElement('span', '', '✓'), document.createTextNode(' Cash on delivery'));
+    cart.append(payment);
+    const checkout = makeElement('a', `checkout-button${summary.itemCount ? '' : ' checkout-disabled'}`);
+    checkout.href = summary.itemCount ? '/shop/checkout' : '/shop#products';
+    checkout.append(makeElement('span', '', summary.itemCount ? 'Continue to checkout' : 'Find something tasty'), makeElement('span', '', '↗'));
+    cart.append(checkout, makeElement('p', 'cart-footnote', 'Your address and contact details are entered at checkout.'));
+
+    currentCart.replaceWith(cart);
+    currentCount.textContent = String(summary.itemCount);
+    const feedback = document.querySelector('.feedback-stack');
+    if (feedback) {
+      feedback.replaceChildren();
+      if (summary.message) {
+        feedback.append(makeElement('p', `feedback-message ${summary.success ? 'success-message' : 'error-message'}`, summary.message));
+      }
+    }
   };
 
   const postCartForm = async (form) => {
@@ -68,49 +156,42 @@
       method: (form.method || 'POST').toUpperCase(),
       body: new URLSearchParams(new FormData(form)),
       credentials: 'same-origin',
-      headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     });
-    const responseHtml = await response.text();
-    const responsePage = new DOMParser().parseFromString(responseHtml, 'text/html');
-    const updatedCart = responsePage.querySelector('#cart-panel');
-    const updatedCount = responsePage.querySelector('#basket-count');
-    const currentCart = document.querySelector('#cart-panel');
-    const currentCount = document.querySelector('#basket-count');
-    if (!response.ok || !updatedCart || !updatedCount || !currentCart || !currentCount) {
-      throw new Error('The shop did not return an updated basket.');
-    }
-
-    currentCart.replaceWith(document.importNode(updatedCart, true));
-    currentCount.textContent = updatedCount.textContent;
-    const currentFeedback = document.querySelector('.feedback-stack');
-    const updatedFeedback = responsePage.querySelector('.feedback-stack');
-    if (currentFeedback && updatedFeedback) {
-      currentFeedback.replaceChildren(...Array.from(updatedFeedback.childNodes, (node) => document.importNode(node, true)));
-    }
+    const summary = await response.json();
+    renderCartSummary(summary);
+    if (!response.ok && summary.success) throw new Error('The basket update was not accepted.');
   };
 
-  const submitCartForm = async (form, button) => {
+  const submitCartForm = async (form, onComplete) => {
     try {
       await postCartForm(form);
     } catch {
       announceCartError();
     } finally {
-      form.dataset.cartPending = 'false';
-      if (button) button.disabled = false;
+      onComplete();
     }
   };
 
-  document.querySelectorAll('.add-product-form').forEach((form) => {
+  const bindAddProductForms = () => document.querySelectorAll('.add-product-form').forEach((form) => {
     form.addEventListener('submit', (event) => {
       if (form.dataset.cartPending === 'true') { event.preventDefault(); return; }
       event.preventDefault();
       const button = form.querySelector('button[type="submit"]');
       const basket = document.querySelector('#basket-count');
-      if (!button) { void submitCartForm(form, button); return; }
       form.dataset.cartPending = 'true';
-      button.disabled = true;
-      if (!basket || typeof Element.prototype.animate !== 'function') {
-        void submitCartForm(form, button);
+      if (button) button.disabled = true;
+      let requestFinished = false;
+      let animationFinished = false;
+      const releaseButton = () => {
+        if (!requestFinished || !animationFinished) return;
+        form.dataset.cartPending = 'false';
+        if (button) button.disabled = false;
+      };
+      void submitCartForm(form, () => { requestFinished = true; releaseButton(); });
+      if (!button || !basket || typeof Element.prototype.animate !== 'function') {
+        animationFinished = true;
+        releaseButton();
         return;
       }
       const from = button.getBoundingClientRect();
@@ -121,20 +202,19 @@
       const endY = to.top + to.height / 2;
       const butterfly = '<svg width="100%" height="100%" viewBox="0 0 100 100" aria-hidden="true"><path d="M49 48C32 13 5 14 9 42c2 15 17 21 38 15-31 2-39 29-21 36 14 5 23-13 25-37 2 24 11 42 25 37 18-7 10-34-21-36 21 6 36 0 38-15 4-28-23-29-40 6" fill="#ffbc48" stroke="#f08c48" stroke-width="3" stroke-linejoin="round"/><path d="M50 45v25m-4-24c-5-8-4-14 0-18m8 18c5-8 4-14 0-18" fill="none" stroke="#644c5a" stroke-width="3" stroke-linecap="round"/></svg>';
       let remaining = 3;
-      let submitted = false;
-      let fallbackTimer;
-      const submitOrder = () => {
-        if (submitted) return;
-        submitted = true;
-        window.clearTimeout(fallbackTimer);
-        void submitCartForm(form, button);
-      };
+      let animationTimer;
       const finishFlyer = (flyer) => {
+        if (flyer.dataset.finished === 'true') return;
+        flyer.dataset.finished = 'true';
         flyer.remove();
         remaining -= 1;
-        if (remaining === 0) submitOrder();
+        if (remaining === 0) {
+          window.clearTimeout(animationTimer);
+          animationFinished = true;
+          releaseButton();
+        }
       };
-      fallbackTimer = window.setTimeout(submitOrder, 1250);
+      animationTimer = window.setTimeout(() => { animationFinished = true; releaseButton(); }, 1200);
       for (let index = 0; index < 3; index += 1) {
         const flyer = document.createElement('span');
         flyer.className = 'butterfly-flyer';
@@ -154,6 +234,7 @@
       }
     });
   });
+  bindAddProductForms();
 
   document.addEventListener('submit', (event) => {
     const form = event.target;
@@ -163,6 +244,9 @@
     form.dataset.cartPending = 'true';
     const button = form.querySelector('button[type="submit"]');
     if (button) button.disabled = true;
-    void submitCartForm(form, button);
+    void submitCartForm(form, () => {
+      form.dataset.cartPending = 'false';
+      if (button) button.disabled = false;
+    });
   });
 })();
