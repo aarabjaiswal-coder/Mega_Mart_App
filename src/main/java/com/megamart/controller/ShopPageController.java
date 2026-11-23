@@ -143,7 +143,7 @@ public class ShopPageController {
             session.removeAttribute(CART_KEY);
             redirectAttributes.addFlashAttribute("orderPlaced",
                     "Order #" + orderId + " placed. Payment is Cash on Delivery.");
-            return "redirect:/shop";
+            return "redirect:/shop#customer-orders";
         } catch (BusinessException exception) {
             model.addAttribute("checkoutError", exception.getMessage());
             addCheckoutCart(model, cartLines);
